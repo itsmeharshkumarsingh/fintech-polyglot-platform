@@ -22,8 +22,8 @@ services:
   - type: web
     name: fintech-go-gateway
     runtime: docker
-    dockerfilePath: ./gateway-go/Dockerfile
-    dockerContext: ./gateway-go
+    dockerfilePath: ./gateway_go/Dockerfile
+    dockerContext: ./gateway_go
     plan: free
     envVars:
       - key: AI_SERVICE_URL
@@ -40,8 +40,8 @@ services:
   - type: web
     name: fintech-frontend
     runtime: docker
-    dockerfilePath: ./frontend/Dockerfile
-    dockerContext: ./frontend
+    dockerfilePath: ./frontend/streamlit/Dockerfile
+    dockerContext: ./frontend/streamlit
     plan: free
     envVars:
       - key: GATEWAY_BASE_URL
