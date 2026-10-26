@@ -1,0 +1,12 @@
+.env
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+faiss_index/
+postgres_data/
+*.db
+*.sqlite3
+.DS_Store
+gateway-go/gateway-bin

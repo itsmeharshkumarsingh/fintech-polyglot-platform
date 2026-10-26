@@ -1,0 +1,50 @@
+databases:
+  - name: fintech-postgres
+    databaseName: fintech_polyglot_db
+    user: hks_admin
+    plan: free
+
+services:
+  - type: web
+    name: fintech-ai-engine
+    runtime: docker
+    dockerfilePath: ./ai-engine-python/Dockerfile
+    dockerContext: ./ai-engine-python
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fintech-postgres
+          property: connectionString
+      - key: GEMINI_API_KEY
+        sync: false
+
+  - type: web
+    name: fintech-go-gateway
+    runtime: docker
+    dockerfilePath: ./gateway-go/Dockerfile
+    dockerContext: ./gateway-go
+    plan: free
+    envVars:
+      - key: AI_SERVICE_URL
+        value: https://fintech-ai-engine.onrender.com
+      - key: PAYPAL_API_BASE
+        value: https://api-m.sandbox.paypal.com
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+
+  - type: web
+    name: fintech-frontend
+    runtime: docker
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    plan: free
+    envVars:
+      - key: GATEWAY_BASE_URL
+        value: https://fintech-go-gateway.onrender.com
+      - key: AI_DIRECT_URL
+        value: https://fintech-ai-engine.onrender.com

@@ -1,0 +1,64 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: fintech_postgres
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  ai-engine:
+    build: ./ai-engine-python
+    container_name: fintech_python_ai
+    restart: on-failure
+    env_file:
+      - .env
+    ports:
+      - "8001:8001"
+    volumes:
+      - faiss_data:/app/faiss_index
+    depends_on:
+      db:
+        condition: service_healthy
+    command: uvicorn main:app --host 0.0.0.0 --port 8001 --workers 1
+
+  gateway:
+    build: ./gateway-go
+    container_name: fintech_go_gateway
+    restart: on-failure
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    environment:
+      - AI_SERVICE_URL=http://ai-engine:8001
+      - PORT=8080
+    depends_on:
+      - ai-engine
+
+  frontend:
+    build: ./frontend
+    container_name: fintech_streamlit
+    restart: on-failure
+    ports:
+      - "8501:8501"
+    environment:
+      - GATEWAY_BASE_URL=http://gateway:8080
+      - AI_DIRECT_URL=http://ai-engine:8001
+    depends_on:
+      - gateway
+    command: streamlit run app.py --server.port=8501 --server.address=0.0.0.0
+
+volumes:
+  postgres_data:
+  faiss_data:
