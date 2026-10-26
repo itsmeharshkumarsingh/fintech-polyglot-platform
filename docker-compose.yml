@@ -33,7 +33,7 @@ services:
     command: uvicorn main:app --host 0.0.0.0 --port 8001 --workers 1
 
   gateway:
-    build: ./gateway-go
+    build: ./gateway_go
     container_name: fintech_go_gateway
     restart: on-failure
     env_file:
