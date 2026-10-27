@@ -76,7 +76,7 @@ To get a local copy of this polyglot architecture running via Docker Compose, fo
 
 ## Contributing
 
-As this project was built for the PayPal AI Hackathon, external contributions are currently closed. However, architectural feedback, ideas, and suggestions are always welcome!
+As this project was initially developed for the PayPal AI Hackathon, external contributions are currently closed. However, architectural feedback, ideas, and suggestions are always welcome!
 
 1.  Fork the Project
 2.  Create your Feature Branch (`git checkout -b feature/Optimization`)
