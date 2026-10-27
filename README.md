@@ -1,6 +1,6 @@
 # PayPal Merchant AI Gateway & Dispute Adjudicator | Polyglot Platform
 
-#### 🔗 [Live Deployment Link](https://fintech-frontend.onrender.com)
+#### 🔗 [Live Deployment Link](https://fintech-frontend-l3fm.onrender.com/)
 
 A high-performance, polyglot microservice architecture designed to automate merchant risk scoring, sandbox transaction processing, and dispute adjudication using real-time AI and vector memory.
 
@@ -42,7 +42,7 @@ To get a local copy of this polyglot architecture running via Docker Compose, fo
 
 1.  **Clone the repo:**
     ```sh
-    git clone [https://github.com/itsmeharshkumarsingh/fintech-polyglot-platform.git](https://github.com/itsmeharshkumarsingh/fintech-polyglot-platform.git)
+    git clone https://github.com/itsmeharshkumarsingh/fintech-polyglot-platform.git
     ```
 2.  **Navigate to the directory:**
     ```sh
