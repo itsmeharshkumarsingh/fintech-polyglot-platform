@@ -78,7 +78,8 @@ A high-performance, **polyglot microservice platform** engineered for the **PayP
 
 ## Architecture
 
-```flowchart TD
+```mermaid
+flowchart TD
     M[Merchant / Buyer] --> GW["Go Gin Edge Gateway<br/>HS256 JWT Auth<br/>Telemetry & Proxy"]
     PP["PayPal Sandbox API<br/>Orders v2 & Webhooks"] <--> GW
 
