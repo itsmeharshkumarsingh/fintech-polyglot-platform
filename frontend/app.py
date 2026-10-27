@@ -10,7 +10,6 @@ AI_DIRECT_URL = os.getenv("AI_DIRECT_URL", "http://localhost:8001")
 
 st.set_page_config(
     page_title="AEGIS | PayPal Polyglot AI Risk & Dispute Gateway",
-    page_icon="🛡️",
     layout="wide"
 )
 
@@ -45,6 +44,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+st.markdown("<br>", unsafe_allow_html=True)
 st.markdown('<div class="hero-tag">— PAYPAL SANDBOX REST API V2 · POLYGLOT FINTECH RISK INTELLIGENCE</div>', unsafe_allow_html=True)
 st.markdown('<div class="hero-title">PayPal Merchant AI Gateway & Dispute Adjudicator</div>', unsafe_allow_html=True)
 st.markdown(
@@ -58,7 +58,7 @@ if "jwt_token" not in st.session_state:
     st.session_state["jwt_token"] = ""
 
 with st.sidebar:
-    st.markdown("### 🛰️ PayPal & Cluster Telemetry")
+    st.markdown("### PayPal & Cluster Telemetry")
     try:
         gw_stats = requests.get(f"{GATEWAY_BASE_URL}/api/gateway/stats", timeout=3).json()
         st.success(
@@ -70,9 +70,9 @@ with st.sidebar:
         st.warning("Go Gateway / Python AI Warming Up")
 
     st.markdown("---")
-    st.markdown("### 🔐 Go Edge JWT Session")
+    st.markdown("### Go Edge JWT Session")
     merch_id = st.text_input("PayPal Merchant ID", value="PAYPAL-MERCH-8841")
-    if st.button("🔑 Issue HS256 JWT via Go Gateway", use_container_width=True):
+    if st.button("Issue HS256 JWT via Go Gateway", use_container_width=True):
         try:
             tok_resp = requests.post(
                 f"{GATEWAY_BASE_URL}/api/gateway/auth/token",
@@ -85,7 +85,7 @@ with st.sidebar:
             st.error(f"Token error: {e}")
 
     st.markdown("---")
-    st.markdown("### 🎯 PayPal Checkout & Dispute Preset")
+    st.markdown("### PayPal Checkout & Dispute Preset")
     preset = st.selectbox(
         "Select PayPal Traffic Scenario",
         [
@@ -132,9 +132,9 @@ with st.sidebar:
 
 col_btn1, col_btn2 = st.columns(2)
 with col_btn1:
-    eval_btn = st.button("⚡ Create PayPal Order v2 & Adjudicate Risk", type="primary", use_container_width=True)
+    eval_btn = st.button("Create PayPal Order v2 & Adjudicate Risk", type="primary", use_container_width=True)
 with col_btn2:
-    webhook_btn = st.button("🔔 Fire PayPal CUSTOMER.DISPUTE.CREATED Webhook", use_container_width=True)
+    webhook_btn = st.button("Fire PayPal CUSTOMER.DISPUTE.CREATED Webhook", use_container_width=True)
 
 if eval_btn or webhook_btn:
     headers = {}
@@ -181,17 +181,17 @@ if eval_btn or webhook_btn:
     m5.metric("FAISS L2 Distance", f"{ai.get('faiss_nearest_distance', 0):.4f}")
 
     st.markdown(
-        f"🔗 **PayPal Sandbox Checkout Approval Link:** "
+        f"**PayPal Sandbox Checkout Approval Link:** "
         f"[{pp.get('approve_url')}]({pp.get('approve_url')})"
     )
 
     c_left, c_right = st.columns([1.2, 1])
     with c_left:
-        st.markdown("### 🧠 PayPal Seller Protection & AI Adjudication")
+        st.markdown("### PayPal Seller Protection & AI Adjudication")
         st.info(ai.get("llm_reasoning", ""))
         st.markdown(f"**Automated PayPal API Action:** `{ai.get('recommended_action', '')}`")
 
-        st.markdown("### 🔎 FAISS Nearest Historical PayPal Precedents")
+        st.markdown("### FAISS Nearest Historical PayPal Precedents")
         for prec in ai.get("matched_precedents", []):
             st.markdown(
                 f"- **`{prec['label']}`** (Historical Risk: `{prec['historical_score']}/100` · "
@@ -199,7 +199,7 @@ if eval_btn or webhook_btn:
             )
 
     with c_right:
-        st.markdown("### 📊 Multi-Variate Risk Telemetry")
+        st.markdown("### Multi-Variate Risk Telemetry")
         plt.style.use("dark_background")
         fig, ax = plt.subplots(figsize=(6, 4.2))
         fig.patch.set_facecolor("#090A0F")
@@ -226,14 +226,14 @@ if eval_btn or webhook_btn:
 
     d1, d2 = st.columns(2)
     d1.download_button(
-        "📥 Download PayPal Disputes API Evidence Packet (.json)",
+        "Download PayPal Disputes API Evidence Packet (.json)",
         data=json.dumps(ai.get("paypal_dispute_evidence", data), indent=2),
         file_name=f"{pp.get('order_id', 'paypal')}_dispute_evidence.json",
         mime="application/json",
         use_container_width=True
     )
     d2.download_button(
-        "📊 Download Full Polyglot Gateway Telemetry (.json)",
+        "Download Full Polyglot Gateway Telemetry (.json)",
         data=json.dumps(data, indent=2),
         file_name=f"{pp.get('order_id', 'paypal')}_full_telemetry.json",
         mime="application/json",
@@ -241,7 +241,7 @@ if eval_btn or webhook_btn:
     )
 
 st.markdown("---")
-st.markdown("### 📜 Immutable PostgreSQL PayPal Order & Dispute Ledger")
+st.markdown("### Immutable PostgreSQL PayPal Order & Dispute Ledger")
 try:
     ledger = requests.get(f"{AI_DIRECT_URL}/api/v1/risk/ledger?limit=8", timeout=5).json()
     if ledger:
