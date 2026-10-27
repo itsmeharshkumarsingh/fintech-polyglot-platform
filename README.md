@@ -78,22 +78,21 @@ A high-performance, **polyglot microservice platform** engineered for the **PayP
 
 ## Architecture
 
-```mermaid
-flowchart TD
-    M[Merchant / Buyer] --> GW[Go Gin Edge Gateway<br/>HS256 JWT · Telemetry · Proxy]
-    PP[PayPal Sandbox API<br/>Orders v2 · Webhooks] <--> GW
+```flowchart TD
+    M[Merchant / Buyer] --> GW["Go Gin Edge Gateway<br/>HS256 JWT Auth<br/>Telemetry & Proxy"]
+    PP["PayPal Sandbox API<br/>Orders v2 & Webhooks"] <--> GW
 
-    GW -- High-Concurrency RPC/HTTP --> AI[FastAPI Intelligence Service<br/>Async Risk & Dispute Engine]
+    GW -- High-Concurrency RPC/HTTP --> AI["FastAPI Intelligence Service<br/>Async Risk & Dispute Engine"]
 
-    AI --> EMB[Embedding Pipeline<br/>Vector Encoding]
-    EMB <--> FAISS[(FAISS Vector Store<br/>Historical Fraud Precedents)]
+    AI --> EMB["Embedding Pipeline<br/>Vector Encoding"]
+    EMB <--> FAISS[("FAISS Vector Store<br/>Historical Fraud Precedents")]
 
-    AI <--> GEM[Google Gemini 2.5 Flash<br/>Risk Scoring & Adjudication]
+    AI <--> GEM["Google Gemini 2.5 Flash<br/>Risk Scoring & Adjudication"]
 
-    GW -.-> PG[(PostgreSQL 16<br/>Immutable Transaction Ledger)]
+    GW -.-> PG[("PostgreSQL 16<br/>Immutable Transaction Ledger")]
     AI -.-> PG
 
-    ST[Streamlit Dashboard<br/>Goroutines · FAISS Memory · Audit UI] --> GW
+    ST["Streamlit Dashboard (UI)<br/>Live Goroutine Telemetry & Audit Log"] --> GW
     ST -.-> PG
 ```
 
@@ -200,31 +199,32 @@ Client / PayPal Webhook -> POST /api/v1/orders (or /webhooks/dispute)
 
 ```text
 fintech-polyglot-platform/
-├── gateway-go/                   # Go (Gin) High-Concurrency Edge Gateway
-│   ├── cmd/
-│   │   └── main.go               #   Entry point, server config & graceful shutdown
-│   ├── internal/
-│   │   ├── middleware/           #   HS256 JWT auth, CORS, latency & goroutine metrics
-│   │   ├── routes/               #   Edge proxy routes & PayPal webhook handlers
-│   │   └── paypal/               #   PayPal Orders v2 Sandbox client
-│   ├── Dockerfile                #   Multi-stage Go binary build
-│   └── go.mod
-├── intelligence-py/              # Python (FastAPI) AI Risk & Adjudication Engine
-│   ├── app/
-│   │   ├── api/                  #   FastAPI endpoints (/score, /adjudicate, /memory)
-│   │   ├── core/                 #   Config, Gemini 2.5 client, structured logging
-│   │   ├── vector/               #   FAISS index manager & precedent retrieval
-│   │   ├── db/                   #   PostgreSQL immutable ledger models & queries
-│   │   └── schemas/              #   Pydantic v2 request/response contracts
+├── .vscode/
+│   └── settings.json
+├── ai-engine-python/             # Python (FastAPI) AI Risk & Adjudication Engine
+│   ├── database.py             # PostgreSQL connection & ledger session
+│   ├── Dockerfile
+│   ├── main.py                 # FastAPI app entry point & router mounting
+│   ├── models.py               # Immutable ledger ORM / data models
+│   ├── requirements.txt
+│   ├── risk_engine.py          # Gemini 2.5 Flash risk scoring logic
+│   ├── schemas.py              # Pydantic v2 request/response validation
+│   └── vector_store.py         # FAISS index manager & precedent retrieval
+├── frontend/                   # Streamlit Telemetry & Operator UI
+│   ├── .streamlit/
+│   │   └── config.toml
+│   ├── app.py                  # Operator dashboard, telemetry & simulator
 │   ├── Dockerfile
 │   └── requirements.txt
-├── dashboard-streamlit/          # Interactive Real-Time Telemetry & Merchant UI
-│   ├── app.py                    #   Goroutine graphs, FAISS state & checkout simulator
-│   └── requirements.txt
-├── db/
-│   └── init.sql                  # Immutable ledger schema & seed dispute precedents
-├── docker-compose.yml            # Full polyglot stack orchestration
-├── .env.example                  # Environment template
+├── gateway_go/                 # Go High-Concurrency Edge Gateway
+│   ├── Dockerfile
+│   ├── go.mod
+│   └── main.go                 # Gin router, JWT middleware, proxy & telemetry
+├── .env
+├── .env.example
+├── .gitignore
+├── docker-compose.yml          # Full polyglot stack orchestration
+├── LICENSE
 └── README.md
 ```
 
