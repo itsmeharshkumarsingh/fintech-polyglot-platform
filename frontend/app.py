@@ -58,6 +58,8 @@ if "jwt_token" not in st.session_state:
     st.session_state["jwt_token"] = ""
 if "ledger_rows" not in st.session_state:
     st.session_state["ledger_rows"] = []
+if "last_evaluation" not in st.session_state:
+    st.session_state["last_evaluation"] = None
 
 with st.sidebar:
     st.markdown("### PayPal & Cluster Telemetry")
@@ -165,31 +167,39 @@ if eval_btn or webhook_btn:
             resp = requests.post(f"{GATEWAY_BASE_URL}/api/gateway/paypal/webhook", json=payload, headers=headers, timeout=15)
         else:
             resp = requests.post(f"{GATEWAY_BASE_URL}/api/gateway/evaluate", json=payload, headers=headers, timeout=15)
+        
         data = resp.json()
+        st.session_state["last_evaluation"] = data
+
+        pp = data.get("paypal_sandbox_order", {})
+        ai = data.get("ai_evaluation", {})
+
+        new_ledger_entry = {
+            "paypal_order_id": pp.get("order_id", "N/A"),
+            "paypal_event_type": ai.get("paypal_event_type", active_event),
+            "merchant_id": merch_id,
+            "amount_usd": float(amount_usd),
+            "velocity_1h": int(velocity_1h),
+            "risk_score": round(float(ai.get("risk_score", 0.0)), 2),
+            "decision": ai.get("decision", "N/A"),
+            "dispute_win_prob": float(ai.get("dispute_win_prob", 0.0)),
+            "paypal_mode": pp.get("mode", "PAYPAL_SANDBOX_LIVE_API")
+        }
+        st.session_state["ledger_rows"] = [
+            new_ledger_entry,
+            *[r for r in st.session_state["ledger_rows"] if r.get("paypal_order_id") != new_ledger_entry["paypal_order_id"]]
+        ][:8]
     except Exception as e:
         st.error(f"Gateway communication error: {e}")
         st.stop()
 
+# --- PERSISTENT RENDERING BLOCK (OUTSIDE BUTTON CLICK) ---
+data = st.session_state.get("last_evaluation")
+
+if data:
     gw = data.get("gateway_telemetry", {})
     pp = data.get("paypal_sandbox_order", {})
     ai = data.get("ai_evaluation", {})
-
-    # Record the adjudicated order immediately into session ledger state
-    new_ledger_entry = {
-        "paypal_order_id": pp.get("order_id", "N/A"),
-        "paypal_event_type": ai.get("paypal_event_type", active_event),
-        "merchant_id": merch_id,
-        "amount_usd": float(amount_usd),
-        "velocity_1h": int(velocity_1h),
-        "risk_score": round(float(ai.get("risk_score", 0.0)), 2),
-        "decision": ai.get("decision", "N/A"),
-        "dispute_win_prob": float(ai.get("dispute_win_prob", 0.0)),
-        "paypal_mode": pp.get("mode", "PAYPAL_SANDBOX_LIVE_API")
-    }
-    st.session_state["ledger_rows"] = [
-        new_ledger_entry,
-        *[r for r in st.session_state["ledger_rows"] if r.get("paypal_order_id") != new_ledger_entry["paypal_order_id"]]
-    ][:8]
 
     st.success(
         f"PayPal Order `{pp.get('order_id')}` (`{pp.get('mode')}`) · "
@@ -265,8 +275,6 @@ if eval_btn or webhook_btn:
         use_container_width=True
     )
 
-    st.rerun()
-
 st.markdown("---")
 st.markdown("### Immutable PostgreSQL PayPal Order & Dispute Ledger")
 
@@ -280,7 +288,6 @@ try:
 except Exception:
     ledger = []
 
-# Merge remote PostgreSQL rows with session-captured rows so the ledger always populates
 seen_ids = {row.get("paypal_order_id") for row in ledger if isinstance(row, dict)}
 for local_row in st.session_state["ledger_rows"]:
     if local_row.get("paypal_order_id") not in seen_ids:
