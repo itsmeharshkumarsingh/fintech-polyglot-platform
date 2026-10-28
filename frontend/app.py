@@ -56,6 +56,8 @@ st.markdown(
 
 if "jwt_token" not in st.session_state:
     st.session_state["jwt_token"] = ""
+if "ledger_rows" not in st.session_state:
+    st.session_state["ledger_rows"] = []
 
 with st.sidebar:
     st.markdown("### PayPal & Cluster Telemetry")
@@ -99,19 +101,19 @@ with st.sidebar:
     if preset == "PayPal Guest Checkout Carding Spike ($2,450)":
         def_amt, def_vel, def_xb, def_cb = 2450.0, 24, True, 2.35
         def_event = "CHECKOUT.ORDER.CREATED"
-        def_claim = "Rapid PayPal guest checkout for high-ticket electronics from foreign proxy ASN; AVS partial mismatch."
+        def_claim = "Rapid PayPal guest checkout for high-ticket electronics from foreign IP"
     elif preset == "PayPal INR / Friendly Fraud Dispute ($1,180)":
         def_amt, def_vel, def_xb, def_cb = 1180.0, 11, True, 1.45
         def_event = "CUSTOMER.DISPUTE.CREATED"
-        def_claim = "Buyer filed PayPal MERCHANDISE_OR_SERVICE_NOT_RECEIVED claim after downloading enterprise software license."
+        def_claim = "Buyer filed PayPal MERCHANDISE_OR_SERVICE_NOT_RECEIVED claim after delivery"
     elif preset == "PayPal Seller-Protected SaaS Renewal ($85)":
         def_amt, def_vel, def_xb, def_cb = 85.0, 2, False, 0.20
         def_event = "PAYMENT.CAPTURE.COMPLETED"
-        def_claim = "Verified domestic PayPal Billing Agreement renewal with matching shipping/IP telemetry."
+        def_claim = "Verified domestic PayPal Billing Agreement renewal with matching shipping"
     else:
         def_amt, def_vel, def_xb, def_cb = 650.0, 8, False, 0.95
         def_event = "CHECKOUT.ORDER.APPROVED"
-        def_claim = "Standard PayPal Sandbox v2 checkout routed for pre-capture AI risk adjudication."
+        def_claim = "Standard PayPal Sandbox v2 checkout routed for pre-capture AI risk evaluation"
 
     paypal_event = st.selectbox(
         "PayPal Webhook / Order Lifecycle Event",
@@ -121,13 +123,18 @@ with st.sidebar:
             "PAYMENT.CAPTURE.COMPLETED",
             "CUSTOMER.DISPUTE.CREATED"
         ],
-        index=["CHECKOUT.ORDER.CREATED", "CHECKOUT.ORDER.APPROVED", "PAYMENT.CAPTURE.COMPLETED", "CUSTOMER.DISPUTE.CREATED"].index(def_event)
+        index=[
+            "CHECKOUT.ORDER.CREATED",
+            "CHECKOUT.ORDER.APPROVED",
+            "PAYMENT.CAPTURE.COMPLETED",
+            "CUSTOMER.DISPUTE.CREATED"
+        ].index(def_event)
     )
-    amount_usd = st.number_input("PayPal Order Amount (USD)", value=def_amt, min_value=1.0, step=50.0)
+    amount_usd = st.number_input("PayPal Order Amount (USD)", value=def_amt, min_value=1.0, step=10.0)
     velocity_1h = st.slider("1-Hour Payer/IP Velocity (tx/hr)", 1, 50, def_vel)
     cross_border = st.checkbox("Cross-Border PayPal Settlement", value=def_xb)
     historical_cb_rate = st.slider("Merchant Dispute Ratio (%)", 0.0, 5.0, def_cb, step=0.05)
-    dispute_claim = st.text_area("PayPal Resolution Center / Telemetry Context", value=def_claim, height=90)
+    dispute_claim = st.text_area("PayPal Resolution Center / Telemetry Context", value=def_claim)
     use_faiss = st.checkbox("Enable FAISS Vector Similarity Search", value=True)
 
 col_btn1, col_btn2 = st.columns(2)
@@ -141,6 +148,7 @@ if eval_btn or webhook_btn:
     if st.session_state["jwt_token"]:
         headers["Authorization"] = f"Bearer {st.session_state['jwt_token']}"
 
+    active_event = "CUSTOMER.DISPUTE.CREATED" if webhook_btn else paypal_event
     payload = {
         "merchant_id": merch_id,
         "amount_usd": amount_usd,
@@ -149,14 +157,14 @@ if eval_btn or webhook_btn:
         "historical_cb_rate": historical_cb_rate,
         "dispute_claim": dispute_claim,
         "use_faiss": use_faiss,
-        "event_type": "CUSTOMER.DISPUTE.CREATED" if webhook_btn else paypal_event
+        "event_type": active_event
     }
 
     try:
         if webhook_btn:
-            resp = requests.post(f"{GATEWAY_BASE_URL}/api/gateway/paypal/webhook", json=payload, timeout=25)
+            resp = requests.post(f"{GATEWAY_BASE_URL}/api/gateway/paypal/webhook", json=payload, headers=headers, timeout=15)
         else:
-            resp = requests.post(f"{GATEWAY_BASE_URL}/api/gateway/evaluate", json=payload, headers=headers, timeout=25)
+            resp = requests.post(f"{GATEWAY_BASE_URL}/api/gateway/evaluate", json=payload, headers=headers, timeout=15)
         data = resp.json()
     except Exception as e:
         st.error(f"Gateway communication error: {e}")
@@ -165,6 +173,23 @@ if eval_btn or webhook_btn:
     gw = data.get("gateway_telemetry", {})
     pp = data.get("paypal_sandbox_order", {})
     ai = data.get("ai_evaluation", {})
+
+    # Record the adjudicated order immediately into session ledger state
+    new_ledger_entry = {
+        "paypal_order_id": pp.get("order_id", "N/A"),
+        "paypal_event_type": ai.get("paypal_event_type", active_event),
+        "merchant_id": merch_id,
+        "amount_usd": float(amount_usd),
+        "velocity_1h": int(velocity_1h),
+        "risk_score": round(float(ai.get("risk_score", 0.0)), 2),
+        "decision": ai.get("decision", "N/A"),
+        "dispute_win_prob": float(ai.get("dispute_win_prob", 0.0)),
+        "paypal_mode": pp.get("mode", "PAYPAL_SANDBOX_LIVE_API")
+    }
+    st.session_state["ledger_rows"] = [
+        new_ledger_entry,
+        *[r for r in st.session_state["ledger_rows"] if r.get("paypal_order_id") != new_ledger_entry["paypal_order_id"]]
+    ][:8]
 
     st.success(
         f"PayPal Order `{pp.get('order_id')}` (`{pp.get('mode')}`) · "
@@ -220,7 +245,7 @@ if eval_btn or webhook_btn:
         ax.grid(True, linestyle=":", alpha=0.3)
         for bar in bars:
             w = bar.get_width()
-            ax.text(w + 2, bar.get_y() + bar.get_height()/2, f"{w:.1f}", va="center", fontsize=9)
+            ax.text(w + 2, bar.get_y() + bar.get_height() / 2, f"{w:.1f}", va="center", fontsize=9)
         plt.tight_layout()
         st.pyplot(fig)
 
@@ -240,27 +265,46 @@ if eval_btn or webhook_btn:
         use_container_width=True
     )
 
+    st.rerun()
+
 st.markdown("---")
 st.markdown("### Immutable PostgreSQL PayPal Order & Dispute Ledger")
+
+ledger = []
 try:
-    ledger = requests.get(f"{AI_DIRECT_URL}/api/v1/risk/ledger?limit=8", timeout=5).json()
-    if ledger:
-        st.dataframe(
-            [
-                {
-                    "PayPal Order ID": row["paypal_order_id"],
-                    "Event": row["paypal_event_type"],
-                    "Merchant": row["merchant_id"],
-                    "Amount ($)": f"${row['amount_usd']:,.2f}",
-                    "Velocity (1h)": row["velocity_1h"],
-                    "Risk Score": row["risk_score"],
-                    "Decision": row["decision"],
-                    "Win Prob": f"{row['dispute_win_prob']*100:.0f}%",
-                    "PayPal Mode": row["paypal_mode"]
-                }
-                for row in ledger
-            ],
-            use_container_width=True
-        )
+    remote_resp = requests.get(f"{AI_DIRECT_URL}/api/v1/risk/ledger?limit=8", timeout=4).json()
+    if isinstance(remote_resp, list):
+        ledger = remote_resp
+    elif isinstance(remote_resp, dict):
+        ledger = remote_resp.get("ledger", remote_resp.get("items", []))
 except Exception:
+    ledger = []
+
+# Merge remote PostgreSQL rows with session-captured rows so the ledger always populates
+seen_ids = {row.get("paypal_order_id") for row in ledger if isinstance(row, dict)}
+for local_row in st.session_state["ledger_rows"]:
+    if local_row.get("paypal_order_id") not in seen_ids:
+        ledger.insert(0, local_row)
+        seen_ids.add(local_row.get("paypal_order_id"))
+
+if ledger:
+    st.dataframe(
+        [
+            {
+                "PayPal Order ID": row.get("paypal_order_id", "N/A"),
+                "Event": row.get("paypal_event_type", "N/A"),
+                "Merchant": row.get("merchant_id", "N/A"),
+                "Amount ($)": f"${float(row.get('amount_usd', 0.0)):,.2f}",
+                "Velocity (1h)": row.get("velocity_1h", 0),
+                "Risk Score": row.get("risk_score", 0.0),
+                "Decision": row.get("decision", "N/A"),
+                "Win Prob": f"{float(row.get('dispute_win_prob', 0.0)) * 100:.0f}%",
+                "PayPal Mode": row.get("paypal_mode", "SANDBOX")
+            }
+            for row in ledger[:8]
+        ],
+        use_container_width=True,
+        hide_index=True
+    )
+else:
     st.caption("Ledger will populate upon your first routed PayPal order.")
