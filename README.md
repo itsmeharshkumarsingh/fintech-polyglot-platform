@@ -5,6 +5,7 @@
 ### Enterprise-grade **polyglot fintech infrastructure**: Go Edge Gateway + Agentic AI Risk Scoring + FAISS Vector Memory + Immutable Ledger
 
 [![Live Demo](https://img.shields.io/badge/Live_Deployment-Render-46E3B7?style=flat&logo=render&logoColor=white)](https://fintech-frontend-l3fm.onrender.com/)
+[![Video Walkthrough](https://img.shields.io/badge/YouTube-Watch_Demo-FF0000?style=flat&logo=youtube&logoColor=white)](https://youtu.be/fXtQl-8Q9Zs)
 [![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go&logoColor=white)](https://go.dev/)
 [![Gin](https://img.shields.io/badge/Gin-Edge_Gateway-008ECF?logo=go&logoColor=white)](https://gin-gonic.com/)
 [![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](https://www.python.org/)
@@ -21,6 +22,8 @@
 
 <h4>
   <a href="https://fintech-frontend-l3fm.onrender.com/">View Live Deployment</a>
+  <span> · </span>
+  <a href="https://youtu.be/fXtQl-8Q9Zs">🎬 Watch Video Demo</a>
   <span> · </span>
   <a href="#quick-start-local">Quick Start</a>
   <span> · </span>
