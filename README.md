@@ -72,7 +72,7 @@ A high-performance, **polyglot microservice platform** engineered for the **PayP
 | **AI Risk Engine** | Real-time transaction risk scoring powered by **Google Gemini 2.5 Flash** and structured prompt reasoning |
 | **FAISS Vector Memory** | Sub-millisecond semantic similarity search matching live disputes against indexed historical fraud precedents |
 | **PayPal Sandbox v2** | End-to-end integration with **PayPal Orders v2 REST API** and automated `CUSTOMER.DISPUTE.CREATED` webhooks |
-| **Auto-Adjudicator** | Synthesizes transaction metadata, buyer history, and top-$k$ FAISS precedents to issue instant dispute verdicts |
+| **Auto-Adjudicator** | Synthesizes transaction metadata, buyer history, and top-k FAISS precedents to issue instant dispute verdicts |
 | **Immutable Ledger** | Append-only PostgreSQL schema recording every order state transition, risk score, and adjudication trace |
 | **Streamlit Telemetry** | Interactive real-time operator dashboard monitoring active goroutines, FAISS index state, and ledger metrics |
 | **Containerized Infra** | Multi-service `docker-compose` orchestration isolating Go edge, Python AI, PostgreSQL, and Streamlit |
