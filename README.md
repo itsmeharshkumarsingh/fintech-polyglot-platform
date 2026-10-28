@@ -1,6 +1,6 @@
 <div align="center">
 
-# PayPal Merchant AI Gateway & Dispute Adjudicator
+# AEGIS: PayPal Merchant AI Gateway & Dispute Adjudicator
 
 ### Enterprise-grade **polyglot fintech infrastructure**: Go Edge Gateway + Agentic AI Risk Scoring + FAISS Vector Memory + Immutable Ledger
 
