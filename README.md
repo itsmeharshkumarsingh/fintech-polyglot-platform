@@ -353,6 +353,6 @@ Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for more informa
 
 <div align="center">
 
-### If you find this polyglot architecture useful, give the repository a star.
+### ⭐If you find this polyglot architecture useful, give the repository a star.⭐
 
 </div>
